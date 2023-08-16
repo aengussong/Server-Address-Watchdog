@@ -2,7 +2,6 @@ package com.buttstuff.localserverwatchdog
 
 import android.Manifest
 import android.app.AlarmManager
-import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -17,13 +16,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.lifecycleScope
 import com.buttstuff.localserverwatchdog.domain.WatchdogManager
 import com.buttstuff.localserverwatchdog.ui.theme.LocalServerWatchdogTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val permissionHandler = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
         if (map.values.all { true }) {
-            WatchdogManager.getInstance().checkServer(this)
+            startWatchdog()
         }
     }
 
@@ -46,12 +47,16 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) {
             permissions.add(Manifest.permission.SCHEDULE_EXACT_ALARM)
         } else {
-            WatchdogManager.getInstance().checkServer(this)
+            startWatchdog()
         }
 
         if (permissions.isNotEmpty()) {
             permissionHandler.launch(permissions.toTypedArray())
         }
+    }
+
+    private fun startWatchdog() = lifecycleScope.launch {
+        WatchdogManager.getInstance().checkServer(this@MainActivity)
     }
 }
 

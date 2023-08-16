@@ -11,6 +11,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.ui.WatchdogReceiver
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 private const val WATCHDOG_CHANNEL = "watchdog_notification"
@@ -30,15 +34,18 @@ class WatchdogManager private constructor() {
         )
     }
 
-    fun checkServer(context: Context) {
+    suspend fun checkServer(context: Context) {
         val am = getAlarmManager(context)
         am.cancel(getActionIntent(context))
         startWatchdog(context)
         checkApi(context)
     }
 
-    private fun checkApi(context: Context) {
-        val result = apiChecker.isWorking()
+    private suspend fun checkApi(context: Context) {
+        val result: Boolean
+        withContext(Dispatchers.IO) {
+            result = apiChecker.isWorking()
+        }
         createNotificationChannel(context)
         val builder = NotificationCompat.Builder(context, WATCHDOG_CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -47,7 +54,12 @@ class WatchdogManager private constructor() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
 
         val id = System.currentTimeMillis().hashCode()
-        NotificationManagerCompat.from(context).notify(id, builder.build())
+        try {
+            NotificationManagerCompat.from(context).notify(id, builder.build())
+        } catch (e: SecurityException) {
+            //todo hide it behind the logger
+            Firebase.crashlytics.recordException(e)
+        }
     }
 
     //todo create new channel before app release in order to adjust importance and priority
