@@ -8,42 +8,51 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.buttstuff.localserverwatchdog.domain.WatchdogManager
+import com.buttstuff.localserverwatchdog.ui.navigation.Main
+import com.buttstuff.localserverwatchdog.ui.navigation.OnBoarding
+import com.buttstuff.localserverwatchdog.ui.screen.WatchdogMainScreen
+import com.buttstuff.localserverwatchdog.ui.screen.WatchdogOnboardingScreen
 import com.buttstuff.localserverwatchdog.ui.theme.LocalServerWatchdogTheme
+import com.buttstuff.localserverwatchdog.ui.viewmodel.WatchdogViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private val permissionHandler = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
-        if (map.values.all { true }) {
-            startWatchdog()
+    private val permissionHandler =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
+            if (map.values.all { true }) {
+                startWatchdog()
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             LocalServerWatchdogTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android")
-                }
+                LocalServerWatchdog()
             }
         }
 
+        handlePermissions()
+    }
+
+    private fun handlePermissions() {
         val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val permissions = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !NotificationManagerCompat.from(this).areNotificationsEnabled()
+        ) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) {
@@ -57,23 +66,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //todo move manager calls to the view model
     private fun startWatchdog() = lifecycleScope.launch {
         WatchdogManager.getInstance().checkServer(this@MainActivity)
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LocalServerWatchdogTheme {
-        Greeting("Android")
+fun LocalServerWatchdog(watchdogViewModel: WatchdogViewModel = viewModel()) {
+    val navController = rememberNavController()
+    val isRequiredDataSet by watchdogViewModel.isRequiredDataSet.collectAsState(initial = false)
+    val startDestination: String = if (isRequiredDataSet) Main().route else OnBoarding().route
+    NavHost(navController, startDestination = startDestination) {
+        composable(OnBoarding().route) {
+            WatchdogOnboardingScreen {
+                navController.navigate(Main().route)
+            }
+        }
+        composable(Main().route) { WatchdogMainScreen() }
     }
 }
