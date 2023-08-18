@@ -75,9 +75,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun LocalServerWatchdog(watchdogViewModel: WatchdogViewModel = viewModel()) {
     val navController = rememberNavController()
-    val isRequiredDataSet by watchdogViewModel.isRequiredDataSet.collectAsState(initial = false)
-    val startDestination: String = if (isRequiredDataSet) Main().route else OnBoarding().route
-    NavHost(navController, startDestination = startDestination) {
+    val isRequiredDataSet by watchdogViewModel.isRequiredDataSet.collectAsState(initial = true)
+    NavHost(navController, startDestination = Main().route) {
         composable(OnBoarding().route) {
             WatchdogOnboardingScreen {
                 navController.navigate(Main().route)
@@ -85,4 +84,6 @@ fun LocalServerWatchdog(watchdogViewModel: WatchdogViewModel = viewModel()) {
         }
         composable(Main().route) { WatchdogMainScreen() }
     }
+
+    if (!isRequiredDataSet) navController.navigate(OnBoarding().route)
 }

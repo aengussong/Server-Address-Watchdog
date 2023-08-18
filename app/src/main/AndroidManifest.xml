@@ -3,9 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".WatchdogApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -18,8 +19,8 @@
         <activity
             android:name="com.buttstuff.localserverwatchdog.MainActivity"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.LocalServerWatchdog">
+            android:theme="@style/Theme.LocalServerWatchdog"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,7 +28,9 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="com.buttstuff.localserverwatchdog.ui.WatchdogReceiver" android:exported="false">
+        <receiver
+            android:name="com.buttstuff.localserverwatchdog.ui.WatchdogReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.buttstuff.localserverwatchdog.CHECK_SERVER" />
             </intent-filter>

@@ -32,8 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.util.isError
-import com.buttstuff.localserverwatchdog.util.isSuccess
-import kotlinx.coroutines.android.awaitFrame
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +63,6 @@ fun SetServerAddressScreen(serverAddressViewModel: SetServerAddressViewModel = v
             placeholder = { Text(text = stringResource(R.string.placeholder_server_address)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = {
-                //todo should clear keyboard focus to hide keyboard?
                 serverAddressViewModel.validateServerAddress()
             })
         )
@@ -92,8 +90,10 @@ fun SetServerAddressScreen(serverAddressViewModel: SetServerAddressViewModel = v
         }
     }
 
-    if (screenState.validationResult.isSuccess()) {
-        onSet()
+    LaunchedEffect(Unit) {
+        serverAddressViewModel.sideEffect.collectLatest { effect ->
+            if (effect is ValidationPassed) onSet()
+        }
     }
 
     LaunchedEffect(focusRequester) {

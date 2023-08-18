@@ -1,5 +1,6 @@
 package com.buttstuff.localserverwatchdog.ui.screen
 
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,7 +17,9 @@ fun WatchdogOnboardingScreen(onOnboardingFinished: () -> Unit) {
                 navController.navigate(OnBoarding.SetInterval.route)
             }
         }
-        composable(OnBoarding.SetInterval.route) {
+        composable(OnBoarding.SetInterval.route, enterTransition = {
+            slideInHorizontally()
+        }) {
             SetIntervalScreen {
                 onOnboardingFinished()
             }
