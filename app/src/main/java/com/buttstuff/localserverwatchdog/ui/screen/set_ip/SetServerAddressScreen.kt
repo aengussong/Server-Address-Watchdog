@@ -20,10 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,13 +33,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.util.isError
 import com.buttstuff.localserverwatchdog.util.isSuccess
+import kotlinx.coroutines.android.awaitFrame
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SetServerAddressScreen(serverAddressViewModel: SetServerAddressViewModel = viewModel(), onSet: () -> Unit) {
     val screenState by serverAddressViewModel.screenState.collectAsState()
 
-    val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         TextField(value = screenState.serverAddress, onValueChange = { value ->
@@ -49,7 +51,8 @@ fun SetServerAddressScreen(serverAddressViewModel: SetServerAddressViewModel = v
             modifier = Modifier
                 .padding(horizontal = 16.dp)
                 .padding(top = 40.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
             isError = screenState.validationResult.isError(),
             supportingText = {
                 val validation = screenState.validationResult
@@ -93,8 +96,8 @@ fun SetServerAddressScreen(serverAddressViewModel: SetServerAddressViewModel = v
         onSet()
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(focusRequester) {
         // show keyboard on screen enter
-        focusManager.moveFocus(FocusDirection.Down)
+        focusRequester.requestFocus()
     }
 }
