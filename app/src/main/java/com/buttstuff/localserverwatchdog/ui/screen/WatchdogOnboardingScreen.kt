@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.buttstuff.localserverwatchdog.ui.navigation.OnBoarding
+import com.buttstuff.localserverwatchdog.ui.screen.set_interval.SetIntervalScreen
 import com.buttstuff.localserverwatchdog.ui.screen.set_ip.SetServerAddressScreen
 
 @Composable

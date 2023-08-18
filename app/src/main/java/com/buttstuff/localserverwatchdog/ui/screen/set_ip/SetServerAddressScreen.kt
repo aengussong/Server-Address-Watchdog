@@ -22,9 +22,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,14 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.util.isError
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SetServerAddressScreen(serverAddressViewModel: SetServerAddressViewModel = viewModel(), onSet: () -> Unit) {
     val screenState by serverAddressViewModel.screenState.collectAsState()
 
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         TextField(value = screenState.serverAddress, onValueChange = { value ->
@@ -92,6 +96,9 @@ fun SetServerAddressScreen(serverAddressViewModel: SetServerAddressViewModel = v
 
     LaunchedEffect(Unit) {
         serverAddressViewModel.sideEffect.collectLatest { effect ->
+            keyboardController?.hide()
+            // wait for keyboard to hide in order to omit minor visual glitches on next screen
+            delay(200)
             if (effect is ValidationPassed) onSet()
         }
     }

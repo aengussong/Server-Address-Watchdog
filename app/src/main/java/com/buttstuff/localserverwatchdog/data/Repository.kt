@@ -20,6 +20,14 @@ class Repository private constructor(private val localData: LocalData) {
         localData.serverAddress = serverAddress
     }
 
+    suspend fun getInterval() = withContext(Dispatchers.IO) {
+        localData.interval
+    }
+
+    suspend fun saveIntervalInMillis(interval: Long) = withContext(Dispatchers.IO) {
+        localData.interval = interval
+    }
+
     companion object {
         private var instance: Repository? = null
         fun getInstance() =
