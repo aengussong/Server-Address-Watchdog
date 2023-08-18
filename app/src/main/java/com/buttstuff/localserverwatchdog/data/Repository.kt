@@ -3,10 +3,14 @@ package com.buttstuff.localserverwatchdog.data
 import com.buttstuff.localserverwatchdog.WatchdogApplication
 import com.buttstuff.localserverwatchdog.data.local.LocalData
 import com.buttstuff.localserverwatchdog.data.local.WatchdogSharedPreferences
+import com.buttstuff.localserverwatchdog.data.logger.FileLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class Repository private constructor(private val localData: LocalData) {
+class Repository private constructor(
+    private val localData: LocalData,
+    private val fileLogger: FileLogger
+) {
 
     suspend fun isRequiredDataSet() = withContext(Dispatchers.IO) {
         localData.serverAddress.isNotBlank()
@@ -28,10 +32,17 @@ class Repository private constructor(private val localData: LocalData) {
         localData.interval = interval
     }
 
+    suspend fun getLastCheckupData(): String = fileLogger.getLastCheckupData()
+
+    suspend fun getFullLogs(): List<String> = fileLogger.getFullLogs()
+
     companion object {
         private var instance: Repository? = null
         fun getInstance() =
-            instance ?: Repository(WatchdogSharedPreferences.getInstance(WatchdogApplication.appContext)).also {
+            instance ?: Repository(
+                WatchdogSharedPreferences.getInstance(WatchdogApplication.appContext),
+                fileLogger = FileLogger.getInstance()
+            ).also {
                 instance = it
             }
     }
