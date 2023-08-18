@@ -79,7 +79,11 @@ fun LocalServerWatchdog(watchdogViewModel: WatchdogViewModel = viewModel()) {
     NavHost(navController, startDestination = Main().route) {
         composable(OnBoarding().route) {
             WatchdogOnboardingScreen {
-                navController.navigate(Main().route)
+                navController.navigate(Main().route) {
+                    popUpTo(navController.graph.id) {
+                        inclusive = true
+                    }
+                }
             }
         }
         composable(Main().route) { WatchdogMainScreen() }
