@@ -5,7 +5,11 @@
     <string name="interval_set_header">Set how often watchdog should check on server. Minimum value is 5 minutes.</string>
     <string name="error_server_address_invalid">Can\'t recognize input as ip or host</string>
     <string name="error_server_address_unreachable">Can\'t reach address. Possibly it is down right now. Watchdog can be set only on up and running address.</string>
+    <string name="ping_server">Bite</string>
+    <string name="last_server_status">Last checkup result: %s</string>
     <string name="hours">h</string>
     <string name="minutes">m</string>
+
+    <string name="placeholder_empty_checkup_result">------------</string>
     <string name="placeholder_server_address" translatable="false">192.168.0.1</string>
 </resources>

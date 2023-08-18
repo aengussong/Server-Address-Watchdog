@@ -14,7 +14,7 @@ class WatchdogReceiver: BroadcastReceiver() {
         val result = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                WatchdogManager.getInstance().checkServer(context!!)
+                WatchdogManager.getInstance().checkServerAndScheduleNextCheckup()
             } catch (ex: Exception) {
                 println("WATCHDOG: got error : ${ex.message}")
             } finally {

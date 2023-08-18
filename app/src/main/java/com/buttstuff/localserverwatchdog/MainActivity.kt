@@ -13,27 +13,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.buttstuff.localserverwatchdog.domain.WatchdogManager
 import com.buttstuff.localserverwatchdog.ui.navigation.Main
 import com.buttstuff.localserverwatchdog.ui.navigation.OnBoarding
 import com.buttstuff.localserverwatchdog.ui.screen.WatchdogMainScreen
 import com.buttstuff.localserverwatchdog.ui.screen.WatchdogOnboardingScreen
 import com.buttstuff.localserverwatchdog.ui.theme.LocalServerWatchdogTheme
 import com.buttstuff.localserverwatchdog.ui.viewmodel.WatchdogViewModel
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val permissionHandler =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
-            if (map.values.all { true }) {
-                startWatchdog()
-            }
-        }
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -57,18 +50,11 @@ class MainActivity : ComponentActivity() {
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) {
             permissions.add(Manifest.permission.SCHEDULE_EXACT_ALARM)
-        } else {
-            startWatchdog()
         }
 
         if (permissions.isNotEmpty()) {
             permissionHandler.launch(permissions.toTypedArray())
         }
-    }
-
-    //todo move manager calls to the view model
-    private fun startWatchdog() = lifecycleScope.launch {
-        WatchdogManager.getInstance().checkServer(this@MainActivity)
     }
 }
 
