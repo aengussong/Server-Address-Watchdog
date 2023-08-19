@@ -36,8 +36,16 @@ class Repository private constructor(
         localData.canWatchOnlyOverWifi
     }
 
-    suspend fun enableCanWatchOnlyOverWifi(enabled: Boolean) {
+    suspend fun enableCanWatchOnlyOverWifi(enabled: Boolean) = withContext(Dispatchers.IO) {
         localData.canWatchOnlyOverWifi = enabled
+    }
+
+    suspend fun shouldWatchdogRun(): Boolean = withContext(Dispatchers.IO) {
+        localData.shouldWatchdogRun
+    }
+
+    suspend fun enableWatchdog(isEnabled: Boolean) = withContext(Dispatchers.IO) {
+        localData.shouldWatchdogRun = isEnabled
     }
 
     suspend fun getLastCheckupData(): String = fileLogger.getLastCheckupData()

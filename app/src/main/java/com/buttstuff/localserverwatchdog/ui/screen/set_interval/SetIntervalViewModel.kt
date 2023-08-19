@@ -2,6 +2,7 @@ package com.buttstuff.localserverwatchdog.ui.screen.set_interval
 
 import androidx.lifecycle.viewModelScope
 import com.buttstuff.localserverwatchdog.data.Repository
+import com.buttstuff.localserverwatchdog.ui.screen.model.UiInterval
 import com.buttstuff.localserverwatchdog.ui.viewmodel.BaseViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,9 +41,3 @@ data class ScreenState(val interval: UiInterval = UiInterval(0, 0))
 
 interface SideEffect
 object SetInterval : SideEffect
-
-data class UiInterval(val hours: Int, val minutes: Int) {
-    val isEmpty: Boolean get() = hoursEmpty && minutes == 0
-    val hoursEmpty: Boolean get() = hours == 0
-
-}

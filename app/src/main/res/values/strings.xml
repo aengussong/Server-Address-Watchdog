@@ -8,6 +8,9 @@
     <string name="error_wifi_is_off">Wi-Fi is off. Watchdog can watch over server address only over Wi-Fi.</string>
     <string name="ping_server">Bite</string>
     <string name="last_server_status">Last checkup result: %s</string>
+    <string name="btn_stop_watchdog">Stop Watchdog</string>
+    <string name="btn_start_watchdog">Start Watchdog</string>
+    <string name="hint_watch_only_over_wifi">Watch only over Wi-Fi</string>
     <string name="hours">h</string>
     <string name="minutes">m</string>
 

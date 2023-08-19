@@ -17,7 +17,10 @@ class TestServerVM : BaseViewModel() {
 
     init {
         viewModelScope.launch {
-            watchdogManager.checkServerAndScheduleNextCheckup()
+            // do not re-start watchdog if user disabled it manually
+            if (repository.shouldWatchdogRun()) {
+                watchdogManager.checkServerAndScheduleNextCheckup()
+            }
             screenState.setValue(screenState.value.copy(lastCheckupResult = repository.getLastCheckupData()))
         }
     }

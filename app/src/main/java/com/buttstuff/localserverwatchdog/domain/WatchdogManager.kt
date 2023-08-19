@@ -37,13 +37,16 @@ class WatchdogManager private constructor(
         return apiChecker.isWorking()
     }
 
-    fun stopWatchdog() {
-        val alarmManager = getAlarmManager()
-        alarmManager.cancel(getActionIntent())
+    fun isWatchdogRunning(): Boolean {
+        return getActionIntentWithFlags(PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE) != null
     }
 
-    fun isWatchdogRunning(): Boolean {
-        TODO("Not implemented")
+    fun stopWatchdog() {
+        val alarmManager = getAlarmManager()
+        // it's important to cancel both alarm manager and pending intent in order to be able to detect whether
+        // watchdog was stopped
+        alarmManager.cancel(getActionIntent())
+        getActionIntent().cancel()
     }
 
     suspend fun startWatchdog() {
@@ -112,10 +115,20 @@ class WatchdogManager private constructor(
         repository.canWatchOnlyOverWifi() && networkStateProvider.isWifiConnected()
 
     private fun getAlarmManager() = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    private fun getActionIntent(): PendingIntent {
+
+    /**
+     * @see getActionIntent
+     * */
+    private fun getActionIntentWithFlags(flags: Int): PendingIntent? {
         val intent = Intent(context, WatchdogReceiver::class.java)
-        return PendingIntent.getBroadcast(context, 101, intent, PendingIntent.FLAG_IMMUTABLE)
+        return PendingIntent.getBroadcast(context, 101, intent, flags)
     }
+
+    // documentation states that null will be returned only if we'll pass PendingIntent.FLAG_NO_CREATE, so it is safe
+    // to use not-null assertion operator
+    // TLDR this shouldn't throw error ever
+    private fun getActionIntent(): PendingIntent = getActionIntentWithFlags(PendingIntent.FLAG_IMMUTABLE)!!
+
 
     companion object {
         private var instance: WatchdogManager? = null

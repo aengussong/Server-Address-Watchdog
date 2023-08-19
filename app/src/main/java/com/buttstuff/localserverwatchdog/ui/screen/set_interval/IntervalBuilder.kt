@@ -1,5 +1,6 @@
 package com.buttstuff.localserverwatchdog.ui.screen.set_interval
 
+import com.buttstuff.localserverwatchdog.ui.screen.model.UiInterval
 import java.util.concurrent.TimeUnit
 
 class IntervalBuilder {

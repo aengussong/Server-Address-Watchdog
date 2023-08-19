@@ -24,7 +24,11 @@ import androidx.navigation.compose.rememberNavController
 import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.ui.navigation.BottomNavigationScreen
 import com.buttstuff.localserverwatchdog.ui.navigation.Main
+import com.buttstuff.localserverwatchdog.ui.navigation.OnBoarding
 import com.buttstuff.localserverwatchdog.ui.screen.logs.LogsScreen
+import com.buttstuff.localserverwatchdog.ui.screen.set_interval.SetIntervalScreen
+import com.buttstuff.localserverwatchdog.ui.screen.set_ip.SetServerAddressScreen
+import com.buttstuff.localserverwatchdog.ui.screen.settings.SettingsScreen
 import com.buttstuff.localserverwatchdog.ui.screen.test_server.TestServerScreen
 import com.buttstuff.localserverwatchdog.ui.theme.LocalServerWatchdogTheme
 
@@ -63,8 +67,20 @@ fun WatchdogMainScreen() {
     }) { innerPadding ->
         NavHost(navController, startDestination = Main.TestServer.route, Modifier.padding(innerPadding)) {
             composable(Main.TestServer.route) { TestServerScreen() }
-            composable(Main.Settings.route) { SettingsScreen() }
+            composable(Main.Settings.route) {
+                SettingsScreen(
+                    onEditAddress = { navController.navigate(OnBoarding.SetScreenAddress.route) },
+                    onEditInterval = { navController.navigate(OnBoarding.SetInterval.route) }
+                )
+            }
             composable(Main.Logs.route) { LogsScreen() }
+
+            composable(OnBoarding.SetInterval.route) {
+                SetIntervalScreen { navController.navigate(Main.Settings.route) }
+            }
+            composable(OnBoarding.SetScreenAddress.route) {
+                SetServerAddressScreen { navController.navigate(Main.Settings.route) }
+            }
         }
     }
 }
