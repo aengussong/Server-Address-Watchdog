@@ -32,6 +32,14 @@ class Repository private constructor(
         localData.interval = interval
     }
 
+    suspend fun canWatchOnlyOverWifi(): Boolean = withContext(Dispatchers.IO) {
+        localData.canWatchOnlyOverWifi
+    }
+
+    suspend fun enableCanWatchOnlyOverWifi(enabled: Boolean) {
+        localData.canWatchOnlyOverWifi = enabled
+    }
+
     suspend fun getLastCheckupData(): String = fileLogger.getLastCheckupData()
 
     suspend fun getFullLogs(): List<String> = fileLogger.getFullLogs()

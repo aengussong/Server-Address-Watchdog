@@ -1,7 +1,9 @@
 package com.buttstuff.localserverwatchdog.data.logger
 
 import android.content.Context
+import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.WatchdogApplication
+import com.buttstuff.localserverwatchdog.util.ERROR_POINTER
 import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_DOWN
 import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_UP
 import com.google.firebase.crashlytics.ktx.crashlytics
@@ -32,6 +34,9 @@ private const val LOG_FILE_NAME_COPY = "watchdog_copy.txt"
 private const val MAX_LOG_LIFESPAN_IN_DAYS = 7
 
 class FileLogger private constructor(private val context: Context) : Logger {
+    private val logStringWifiOff: String by lazy {
+        context.getString(R.string.error_wifi_is_off)
+    }
     private val logDateExample: String by lazy { logLineTimeFormatter.format(Date()) }
 
     private val logLineTimeFormatter = SimpleDateFormat(LOG_LINE_TIME_PATTERN, Locale.getDefault())
@@ -65,6 +70,10 @@ class FileLogger private constructor(private val context: Context) : Logger {
         val status = if (isAvailable) SERVER_STATUS_UP else SERVER_STATUS_DOWN
         val data = "${logLineTimeFormatter.format(Date())} $serverAddress $status"
         log(data)
+    }
+
+    override fun logWifiIsOff() {
+        log("$ERROR_POINTER $logStringWifiOff\n")
     }
 
     override fun logException(exception: Throwable) {

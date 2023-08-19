@@ -9,6 +9,7 @@ private const val PREF_NAME = "watchdog_pref"
 
 private const val KEY_SERVER_ADDRESS = "key_server_address"
 private const val KEY_WATCHDOG_INTERVAL = "key_interval"
+private const val KEY_WATCH_ONLY_OVER_WIFI = "key_only_wifi"
 
 //todo migrate from preferences to datastore
 class WatchdogSharedPreferences private constructor(private val preferences: SharedPreferences) : LocalData {
@@ -24,6 +25,12 @@ class WatchdogSharedPreferences private constructor(private val preferences: Sha
             putLong(KEY_WATCHDOG_INTERVAL, value)
         }
 
+    override var canWatchOnlyOverWifi: Boolean
+        get() = preferences.getBoolean(KEY_WATCH_ONLY_OVER_WIFI, true)
+        set(value) = preferences.edit {
+            putBoolean(KEY_WATCH_ONLY_OVER_WIFI, value)
+        }
+
     companion object {
         private var instance: LocalData? = null
         fun getInstance(context: Context): LocalData =
@@ -36,4 +43,5 @@ class WatchdogSharedPreferences private constructor(private val preferences: Sha
 interface LocalData {
     var serverAddress: String
     var interval: Long
+    var canWatchOnlyOverWifi: Boolean
 }

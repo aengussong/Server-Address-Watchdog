@@ -22,12 +22,20 @@ class WatchdogManager private constructor(
     private val context: Context,
     private val apiChecker: ApiChecker,
     private val repository: Repository,
-    private val logger: FileLogger
+    private val logger: FileLogger,
+    private val networkStateProvider: NetworkStateProvider
 ) {
     /**
      * @return - true if assigned server is running
      * */
-    suspend fun checkServerOnce(): Boolean = apiChecker.isWorking()
+    suspend fun checkServerOnce(): Boolean {
+        if (!isPassingWifiRestriction()) {
+            logger.logWifiIsOff()
+            return false
+        }
+
+        return apiChecker.isWorking()
+    }
 
     fun stopWatchdog() {
         val alarmManager = getAlarmManager()
@@ -55,6 +63,11 @@ class WatchdogManager private constructor(
         // reschedule checkup
         getAlarmManager().cancel(getActionIntent())
         startWatchdog()
+
+        if (!isPassingWifiRestriction()) {
+            logger.logWifiIsOff()
+            return
+        }
 
         val isWorkingNow = apiChecker.isWorking()
         if (!wasLastCheckupSuccessful() && isWorkingNow || !isWorkingNow) {
@@ -95,6 +108,9 @@ class WatchdogManager private constructor(
         }
     }
 
+    private suspend fun isPassingWifiRestriction() =
+        repository.canWatchOnlyOverWifi() && !networkStateProvider.isWifiConnected()
+
     private fun getAlarmManager() = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     private fun getActionIntent(): PendingIntent {
         val intent = Intent(context, WatchdogReceiver::class.java)
@@ -107,7 +123,8 @@ class WatchdogManager private constructor(
             context = WatchdogApplication.appContext,
             apiChecker = ApiChecker.getInstance(),
             repository = Repository.getInstance(),
-            logger = FileLogger.getInstance()
+            logger = FileLogger.getInstance(),
+            networkStateProvider = NetworkStateProvider.getInstance()
         ).also { instance = it }
     }
 }

@@ -6,4 +6,5 @@ interface Logger {
     fun logException(exception: Throwable)
 
     fun logCheckup(serverAddress: String, isAvailable: Boolean)
+    fun logWifiIsOff()
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.buttstuff.localserverwatchdog.util.ERROR_POINTER
 import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_DOWN
 import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_UP
 
@@ -45,12 +46,17 @@ fun LogsScreen(logsVM: LogsVM = viewModel()) {
 }
 
 @Composable
-fun buildLogsText(lines: List<String>): AnnotatedString {
+private fun buildLogsText(lines: List<String>): AnnotatedString {
     val dateStyle = SpanStyle(color = MaterialTheme.colorScheme.tertiary)
     val statusOkStyle = SpanStyle(color = MaterialTheme.colorScheme.primary)
     val statusDownStyle = SpanStyle(color = MaterialTheme.colorScheme.error)
     return buildAnnotatedString {
         lines.forEach { line ->
+            if(line.isErrorLog()) {
+                appendError(text = line, errorStyle = statusDownStyle)
+                return@forEach
+            }
+
             //todo magic number - find another way to provide timestamp length
             val timestampLength = 21
             val timeStampString = line.substring(0, timestampLength)
@@ -75,3 +81,12 @@ fun buildLogsText(lines: List<String>): AnnotatedString {
         }
     }
 }
+
+@Composable
+private fun AnnotatedString.Builder.appendError(text: String, errorStyle: SpanStyle){
+    withStyle(errorStyle) {
+        append(text)
+    }
+}
+
+private fun String.isErrorLog() = this.startsWith(ERROR_POINTER)
