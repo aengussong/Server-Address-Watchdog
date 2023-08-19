@@ -26,7 +26,7 @@ private const val LOG_FILE_NAME = "watchdog_logs.txt"
 
 private const val MAX_LOG_LIFESPAN_IN_DAYS = 7
 
-class FileLogger private constructor(private val context: Context): Logger {
+class FileLogger private constructor(private val context: Context) : Logger {
     private val logDateExample: String by lazy { logLineTimeFormatter.format(Date()) }
 
     private val logLineTimeFormatter = SimpleDateFormat(LOG_LINE_TIME_PATTERN, Locale.getDefault())
@@ -53,8 +53,8 @@ class FileLogger private constructor(private val context: Context): Logger {
     suspend fun getLastCheckupData(): String = withContext(Dispatchers.IO) {
         var line = ""
 
-        BufferedReader(FileReader(logFile)).use {input ->
-            while(true) {
+        BufferedReader(FileReader(logFile)).use { input ->
+            while (true) {
                 line = input.readLine() ?: break
             }
         }
@@ -66,7 +66,7 @@ class FileLogger private constructor(private val context: Context): Logger {
         val lines = mutableListOf<String>()
 
         BufferedReader(FileReader(logFile)).use { input ->
-            while(true) {
+            while (true) {
                 val line = input.readLine() ?: break
                 lines.add(line)
             }

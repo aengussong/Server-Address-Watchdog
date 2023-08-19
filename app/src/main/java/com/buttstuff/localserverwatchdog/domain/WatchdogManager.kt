@@ -13,8 +13,8 @@ import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.WatchdogApplication
 import com.buttstuff.localserverwatchdog.data.Repository
 import com.buttstuff.localserverwatchdog.data.logger.FileLogger
-import com.buttstuff.localserverwatchdog.data.logger.Logger
 import com.buttstuff.localserverwatchdog.ui.WatchdogReceiver
+import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_UP
 
 private const val WATCHDOG_CHANNEL = "watchdog_notification"
 
@@ -22,7 +22,7 @@ class WatchdogManager private constructor(
     private val context: Context,
     private val apiChecker: ApiChecker,
     private val repository: Repository,
-    private val logger: Logger
+    private val logger: FileLogger
 ) {
     /**
      * @return - true if assigned server is running
@@ -56,15 +56,17 @@ class WatchdogManager private constructor(
         getAlarmManager().cancel(getActionIntent())
         startWatchdog()
 
-        val result = apiChecker.isWorking()
-        sendNotification(result)
+        val isWorkingNow = apiChecker.isWorking()
+        if (!wasLastCheckupSuccessful() && isWorkingNow || !isWorkingNow) {
+            sendNotification(isWorkingNow, repository.getServerAddress())
+        }
     }
 
-    private fun sendNotification(isServerWorking: Boolean) {
+    private fun sendNotification(isServerWorking: Boolean, serverAddress: String) {
         createNotificationChannel()
         val builder = NotificationCompat.Builder(context, WATCHDOG_CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Watchdog result")
+            .setContentTitle("Watchdog: $serverAddress")
             .setContentText("Is server running: $isServerWorking")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
@@ -75,6 +77,8 @@ class WatchdogManager private constructor(
             logger.logException(e)
         }
     }
+
+    private suspend fun wasLastCheckupSuccessful() = logger.getLastCheckupData().contains(SERVER_STATUS_UP)
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
