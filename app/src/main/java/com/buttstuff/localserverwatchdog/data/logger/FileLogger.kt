@@ -51,6 +51,7 @@ class FileLogger private constructor(private val context: Context) : Logger {
         get() = File(context.filesDir, LOG_FILE_NAME_COPY)
 
     init {
+        logFile.createNewFile()
         GlobalScope.launch(Dispatchers.IO) {
             for (logString in writeChannel) {
                 writeToFile(logString)
