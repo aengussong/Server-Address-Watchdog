@@ -109,7 +109,7 @@ class WatchdogManager private constructor(
     }
 
     private suspend fun isPassingWifiRestriction() =
-        repository.canWatchOnlyOverWifi() && !networkStateProvider.isWifiConnected()
+        repository.canWatchOnlyOverWifi() && networkStateProvider.isWifiConnected()
 
     private fun getAlarmManager() = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     private fun getActionIntent(): PendingIntent {

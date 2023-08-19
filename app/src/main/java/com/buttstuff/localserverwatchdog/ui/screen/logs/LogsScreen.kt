@@ -89,4 +89,4 @@ private fun AnnotatedString.Builder.appendError(text: String, errorStyle: SpanSt
     }
 }
 
-private fun String.isErrorLog() = this.startsWith(ERROR_POINTER)
+private fun String.isErrorLog() = this.contains(ERROR_POINTER)

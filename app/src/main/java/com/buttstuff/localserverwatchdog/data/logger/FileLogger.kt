@@ -61,19 +61,18 @@ class FileLogger private constructor(private val context: Context) : Logger {
     override fun log(data: String) {
         GlobalScope.launch(Dispatchers.IO) {
             mutex.withLock {
-                writeChannel.send(data)
+                writeChannel.send(formatLog(data))
             }
         }
     }
 
     override fun logCheckup(serverAddress: String, isAvailable: Boolean) {
         val status = if (isAvailable) SERVER_STATUS_UP else SERVER_STATUS_DOWN
-        val data = "${logLineTimeFormatter.format(Date())} $serverAddress $status"
-        log(data)
+        log("$serverAddress $status")
     }
 
     override fun logWifiIsOff() {
-        log("$ERROR_POINTER $logStringWifiOff\n")
+        log("$ERROR_POINTER $logStringWifiOff")
     }
 
     override fun logException(exception: Throwable) {
@@ -139,11 +138,15 @@ class FileLogger private constructor(private val context: Context) : Logger {
         }
     }
 
+    private fun formatLog(data: String): String {
+        return "${logLineTimeFormatter.format(Date())} $data\n"
+    }
+
     private fun writeToFile(data: String) {
         try {
             logFile.createNewFile()
             FileOutputStream(logFile, true).use { outputStream ->
-                OutputStreamWriter(outputStream).use { it.append(data + "\n") }
+                OutputStreamWriter(outputStream).use { it.append(data) }
             }
         } catch (e: IOException) {
             Firebase.crashlytics.recordException(e)
