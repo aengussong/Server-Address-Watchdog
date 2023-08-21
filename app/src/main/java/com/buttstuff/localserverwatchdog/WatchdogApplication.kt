@@ -1,8 +1,7 @@
 package com.buttstuff.localserverwatchdog
 
 import android.app.Application
-import androidx.work.WorkManager
-import com.buttstuff.localserverwatchdog.worker.cleanupLogsRequest
+import com.buttstuff.localserverwatchdog.inexact_background_work.InexactBackgroundWorkManager
 
 class WatchdogApplication : Application() {
 
@@ -15,6 +14,6 @@ class WatchdogApplication : Application() {
         super.onCreate()
         appContext = this
 
-        WorkManager.getInstance(this).enqueue(cleanupLogsRequest)
+        InexactBackgroundWorkManager.getInstance().scheduleCleanUpJob()
     }
 }

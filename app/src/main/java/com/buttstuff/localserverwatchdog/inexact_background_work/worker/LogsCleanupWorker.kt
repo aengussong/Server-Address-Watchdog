@@ -1,4 +1,4 @@
-package com.buttstuff.localserverwatchdog.worker
+package com.buttstuff.localserverwatchdog.inexact_background_work.worker
 
 import android.content.Context
 import androidx.work.CoroutineWorker

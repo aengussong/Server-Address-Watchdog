@@ -13,6 +13,7 @@ import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.WatchdogApplication
 import com.buttstuff.localserverwatchdog.data.Repository
 import com.buttstuff.localserverwatchdog.data.logger.FileLogger
+import com.buttstuff.localserverwatchdog.inexact_background_work.InexactBackgroundWorkManager
 import com.buttstuff.localserverwatchdog.ui.WatchdogReceiver
 import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_UP
 
@@ -23,7 +24,8 @@ class WatchdogManager private constructor(
     private val serverReachabilityChecker: ServerReachabilityChecker,
     private val repository: Repository,
     private val logger: FileLogger,
-    private val networkStateProvider: NetworkStateProvider
+    private val networkStateProvider: NetworkStateProvider,
+    private val inexactBackgroundWorkManager: InexactBackgroundWorkManager
 ) {
     /**
      * @return - true if assigned server is running
@@ -47,6 +49,8 @@ class WatchdogManager private constructor(
         // watchdog was stopped
         alarmManager.cancel(getActionIntent())
         getActionIntent().cancel()
+
+        inexactBackgroundWorkManager.cancelFailSafe()
     }
 
     suspend fun startWatchdog() {
@@ -58,6 +62,8 @@ class WatchdogManager private constructor(
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, actionIntent
         )
+
+        inexactBackgroundWorkManager.scheduleFailSafe()
     }
 
     suspend fun checkServerAndScheduleNextCheckup() {
@@ -133,7 +139,8 @@ class WatchdogManager private constructor(
             serverReachabilityChecker = ServerReachabilityChecker.getInstance(),
             repository = Repository.getInstance(),
             logger = FileLogger.getInstance(),
-            networkStateProvider = NetworkStateProvider.getInstance()
+            networkStateProvider = NetworkStateProvider.getInstance(),
+            inexactBackgroundWorkManager = InexactBackgroundWorkManager.getInstance()
         ).also { instance = it }
     }
 }
