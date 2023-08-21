@@ -22,6 +22,7 @@ import java.io.FileOutputStream
 import java.io.FileReader
 import java.io.IOException
 import java.io.OutputStreamWriter
+import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -33,6 +34,11 @@ private const val LOG_FILE_NAME_COPY = "watchdog_copy.txt"
 
 private const val MAX_LOG_LIFESPAN_IN_DAYS = 7
 
+/**
+ * Main Logger implementation. All logs operations that are meant to be logged in the file should be logged throuh
+ * [log] function or formatted with [logLineTimeFormatter] in order to ensure one log style and ease parsing and uniform
+ * logs handling.
+ * */
 class FileLogger private constructor(private val context: Context) : Logger {
     private val logStringWifiOff: String by lazy {
         context.getString(R.string.error_wifi_is_off)
@@ -51,8 +57,10 @@ class FileLogger private constructor(private val context: Context) : Logger {
         get() = File(context.filesDir, LOG_FILE_NAME_COPY)
 
     init {
-        logFile.createNewFile()
         GlobalScope.launch(Dispatchers.IO) {
+            mutex.withLock {
+                logFile.createNewFile()
+            }
             for (logString in writeChannel) {
                 writeToFile(logString)
             }
@@ -116,23 +124,34 @@ class FileLogger private constructor(private val context: Context) : Logger {
             BufferedReader(FileReader(logFile)).use { reader ->
                 while (true) {
                     val log = reader.readLine() ?: break
-                    val testDate = log.subSequence(0, logDateExample.length).toString()
-                    val date = logLineTimeFormatter.parse(testDate) ?: Date()
-                    val diffDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - date.time)
+                    val logDate = runCatching {
+                        logLineTimeFormatter.parse(log.subSequence(0, logDateExample.length).toString())
+                    }.getOrNull() ?: Date()
+                    val diffDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - logDate.time)
                     if (diffDays <= MAX_LOG_LIFESPAN_IN_DAYS) {
                         writer.append(log + "\n")
+                    } else {
+                        val errorLine =
+                            "Removed line with diff of $diffDays days: $diffDays and current time ${System.currentTimeMillis()}"
+                        Firebase.crashlytics.recordException(IllegalStateException(
+                            errorLine
+                        ))
                     }
                 }
             }
             writer.close()
             output.close()
-        }
 
-        mutex.withLock {
             try {
                 logFile.delete()
                 logFileTemp.renameTo(logFile)
                 logFileTemp.delete()
+                if (!logFile.exists()) {
+                    Firebase.crashlytics.recordException(IllegalStateException("Log file isn't created after cleanup operation."))
+                }
+                if (logFileTemp.exists()) {
+                    Firebase.crashlytics.recordException(IllegalStateException("Temp log file wasn't removed after cleanup operation"))
+                }
             } catch (e: SecurityException) {
                 Firebase.crashlytics.recordException(e)
             }
