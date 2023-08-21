@@ -80,7 +80,7 @@ class WatchdogManager private constructor(
         createNotificationChannel()
         val builder = NotificationCompat.Builder(context, WATCHDOG_CHANNEL).setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Watchdog: $serverAddress").setContentText("Is server running: $isServerWorking")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
 
         val id = System.currentTimeMillis().hashCode()
         try {
