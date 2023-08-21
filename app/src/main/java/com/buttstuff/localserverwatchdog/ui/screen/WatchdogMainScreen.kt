@@ -3,7 +3,6 @@ package com.buttstuff.localserverwatchdog.ui.screen
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.sharp.Email
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -35,8 +34,8 @@ import com.buttstuff.localserverwatchdog.ui.theme.LocalServerWatchdogTheme
 @Composable
 private fun bottomNavigationEntries() = listOf(
     BottomNavigationScreen(Main.TestServer, painterResource(R.drawable.ic_dog_small)),
-    BottomNavigationScreen(Main.Settings, rememberVectorPainter(Icons.Filled.Settings)),
-    BottomNavigationScreen(Main.Logs, rememberVectorPainter(Icons.Sharp.Email))
+    BottomNavigationScreen(Main.Logs, painterResource(R.drawable.ic_sheet)),
+    BottomNavigationScreen(Main.Settings, rememberVectorPainter(Icons.Filled.Settings))
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
