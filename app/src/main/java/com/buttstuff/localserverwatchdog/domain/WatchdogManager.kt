@@ -56,9 +56,7 @@ class WatchdogManager private constructor(
         val interval = repository.getInterval()
 
         alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            System.currentTimeMillis() + interval,
-            actionIntent
+            AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, actionIntent
         )
     }
 
@@ -80,10 +78,8 @@ class WatchdogManager private constructor(
 
     private fun sendNotification(isServerWorking: Boolean, serverAddress: String) {
         createNotificationChannel()
-        val builder = NotificationCompat.Builder(context, WATCHDOG_CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Watchdog: $serverAddress")
-            .setContentText("Is server running: $isServerWorking")
+        val builder = NotificationCompat.Builder(context, WATCHDOG_CHANNEL).setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("Watchdog: $serverAddress").setContentText("Is server running: $isServerWorking")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
         val id = System.currentTimeMillis().hashCode()
@@ -112,7 +108,7 @@ class WatchdogManager private constructor(
     }
 
     private suspend fun isPassingWifiRestriction() =
-        repository.canWatchOnlyOverWifi() && networkStateProvider.isWifiConnected()
+        !repository.canWatchOnlyOverWifi() || (repository.canWatchOnlyOverWifi() && networkStateProvider.isWifiConnected())
 
     private fun getAlarmManager() = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
