@@ -1,5 +1,6 @@
 package com.buttstuff.localserverwatchdog.ui.screen.logs
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -58,7 +59,7 @@ private fun buildLogsText(lines: List<String>): AnnotatedString {
             }
 
             //todo magic number - find another way to provide timestamp length
-            val timestampLength = 21
+            val timestampLength = 21.takeIf { it <= line.length} ?: line.length
             val timeStampString = line.substring(0, timestampLength)
             withStyle(dateStyle) {
                 append(timeStampString)
@@ -67,7 +68,7 @@ private fun buildLogsText(lines: List<String>): AnnotatedString {
             val statusOkIndex = line.indexOf(SERVER_STATUS_UP).takeIf { it > -1 }
             val statusIndex = statusOkIndex
                 ?: line.indexOf(SERVER_STATUS_DOWN).takeIf { it > -1 }
-                ?: line.lastIndex
+                ?: line.length
 
 
             val addressString = line.substring(timestampLength, statusIndex)
@@ -82,10 +83,11 @@ private fun buildLogsText(lines: List<String>): AnnotatedString {
     }
 }
 
+@SuppressLint("ComposableNaming")
 @Composable
 private fun AnnotatedString.Builder.appendError(text: String, errorStyle: SpanStyle){
     withStyle(errorStyle) {
-        append(text)
+        append("$text\n")
     }
 }
 
