@@ -9,7 +9,7 @@ import java.net.InetAddress
 
 private const val CHECKUP_TIMEOUT = 5000
 
-class ApiChecker private constructor(private val logger: Logger, private val repository: Repository) {
+class ServerReachabilityChecker private constructor(private val logger: Logger, private val repository: Repository) {
 
     suspend fun isWorking(): Boolean {
         return withContext(Dispatchers.IO) {
@@ -21,6 +21,6 @@ class ApiChecker private constructor(private val logger: Logger, private val rep
     }
 
     companion object {
-        fun getInstance() = ApiChecker(FileLogger.getInstance(), Repository.getInstance())
+        fun getInstance() = ServerReachabilityChecker(FileLogger.getInstance(), Repository.getInstance())
     }
 }

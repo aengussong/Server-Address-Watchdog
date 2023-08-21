@@ -20,7 +20,7 @@ private const val WATCHDOG_CHANNEL = "watchdog_notification"
 
 class WatchdogManager private constructor(
     private val context: Context,
-    private val apiChecker: ApiChecker,
+    private val serverReachabilityChecker: ServerReachabilityChecker,
     private val repository: Repository,
     private val logger: FileLogger,
     private val networkStateProvider: NetworkStateProvider
@@ -34,7 +34,7 @@ class WatchdogManager private constructor(
             return false
         }
 
-        return apiChecker.isWorking()
+        return serverReachabilityChecker.isWorking()
     }
 
     fun isWatchdogRunning(): Boolean {
@@ -72,9 +72,9 @@ class WatchdogManager private constructor(
             return
         }
 
-        val isWorkingNow = apiChecker.isWorking()
-        if (!wasLastCheckupSuccessful() && isWorkingNow || !isWorkingNow) {
-            sendNotification(isWorkingNow, repository.getServerAddress())
+        val isServerResponsive = serverReachabilityChecker.isWorking()
+        if (!wasLastCheckupSuccessful() && isServerResponsive || !isServerResponsive) {
+            sendNotification(isServerResponsive, repository.getServerAddress())
         }
     }
 
@@ -134,7 +134,7 @@ class WatchdogManager private constructor(
         private var instance: WatchdogManager? = null
         fun getInstance() = instance ?: WatchdogManager(
             context = WatchdogApplication.appContext,
-            apiChecker = ApiChecker.getInstance(),
+            serverReachabilityChecker = ServerReachabilityChecker.getInstance(),
             repository = Repository.getInstance(),
             logger = FileLogger.getInstance(),
             networkStateProvider = NetworkStateProvider.getInstance()
