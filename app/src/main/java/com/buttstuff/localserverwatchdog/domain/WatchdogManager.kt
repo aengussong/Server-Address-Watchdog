@@ -77,7 +77,7 @@ class WatchdogManager private constructor(
         }
 
         val isServerResponsive = serverReachabilityChecker.isWorking()
-        if (!wasLastCheckupSuccessful() && isServerResponsive || !isServerResponsive) {
+        if (wasLastCheckupSuccessful() == false && isServerResponsive || !isServerResponsive) {
             sendNotification(isServerResponsive, repository.getServerAddress())
         }
     }
@@ -96,7 +96,9 @@ class WatchdogManager private constructor(
         }
     }
 
-    private suspend fun wasLastCheckupSuccessful() = logger.getLastCheckupData().contains(SERVER_STATUS_UP)
+    private suspend fun wasLastCheckupSuccessful(): Boolean? {
+        return logger.getLastCheckupData().takeIf { it.isNotBlank() }?.contains(SERVER_STATUS_UP)
+    }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
