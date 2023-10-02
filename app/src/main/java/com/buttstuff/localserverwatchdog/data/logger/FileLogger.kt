@@ -56,6 +56,9 @@ class FileLogger private constructor(private val context: Context) : Logger {
             }
         }
 
+    private val logFiles: Array<out File>
+        get() = logFolder.listFiles().orEmpty()
+
     private val currentLogFile: File
         get() {
             val fileName = createLogFileName()
@@ -93,16 +96,19 @@ class FileLogger private constructor(private val context: Context) : Logger {
 
     suspend fun getLastCheckupData(): String = withContext(Dispatchers.IO) {
         mutex.withLock {
-            val logFiles = logFolder.listFiles().orEmpty().apply { sortByDescending { it.lastModified() } }
-            logFiles.asSequence().map {
-                var line: String? = null
-                BufferedReader(FileReader(it)).use { input ->
-                    while (true) {
-                        line = input.readLine() ?: break
+            logFiles.apply { sortByDescending { it.lastModified() } }
+                .asSequence()
+                .map {
+                    var line: String? = null
+                    BufferedReader(FileReader(it)).use { input ->
+                        while (true) {
+                            line = input.readLine() ?: break
+                        }
                     }
-                }
-                line
-            }.filter { !it.isNullOrBlank() }.take(1).firstOrNull() ?: ""
+                    line
+                }.filter { !it.isNullOrBlank() }
+                .take(1)
+                .firstOrNull() ?: ""
         }
     }
 
@@ -110,8 +116,7 @@ class FileLogger private constructor(private val context: Context) : Logger {
         val lines = mutableListOf<String>()
 
         mutex.withLock {
-            val logFiles = logFolder.listFiles().orEmpty().apply { sortBy { it.lastModified() } }
-            logFiles.forEach { logFile ->
+            logFiles.apply { sortBy { it.lastModified() } }.forEach { logFile ->
                 BufferedReader(FileReader(logFile)).use { input ->
                     while (true) {
                         val line = input.readLine() ?: break
@@ -132,9 +137,7 @@ class FileLogger private constructor(private val context: Context) : Logger {
                 createLogFileName(date)
             }
 
-            logFolder.listFiles()?.filter { !relevantLogNames.contains(it.name) }?.forEach {
-                deleteFile(it)
-            }
+            logFiles.filter { !relevantLogNames.contains(it.name) }.forEach(::deleteFile)
         }
     }
 
