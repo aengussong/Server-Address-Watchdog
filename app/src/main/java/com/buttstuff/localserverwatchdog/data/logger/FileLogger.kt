@@ -16,21 +16,20 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
-import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileReader
 import java.io.IOException
 import java.io.OutputStreamWriter
-import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 private const val LOG_LINE_TIME_PATTERN = "d MMM y HH:mm:ss"
-private const val LOG_FILE_NAME = "watchdog_logs.txt"
-private const val LOG_FILE_NAME_COPY = "watchdog_copy.txt"
+private const val LOG_FILE_DATE_PATTERN = "yyyy-MM-dd"
+private const val LOG_FOLDER_NAME = "watchdog_logs"
+private const val LOG_FILE_NAME_POSTFIX = "watchdog_log.txt"
 
 private const val MAX_LOG_LIFESPAN_IN_DAYS = 7
 
@@ -43,24 +42,31 @@ class FileLogger private constructor(private val context: Context) : Logger {
     private val logStringWifiOff: String by lazy {
         context.getString(R.string.error_wifi_is_off)
     }
-    private val logDateExample: String by lazy { logLineTimeFormatter.format(Date()) }
-
     private val logLineTimeFormatter = SimpleDateFormat(LOG_LINE_TIME_PATTERN, Locale.getDefault())
+    private val logFileNameFormatter = SimpleDateFormat(LOG_FILE_DATE_PATTERN, Locale.getDefault())
 
     private val mutex = Mutex()
 
     private val writeChannel = Channel<String>()
-    private val logFile: File
-        get() = File(context.filesDir, LOG_FILE_NAME)
 
-    private val logFileTemp: File
-        get() = File(context.filesDir, LOG_FILE_NAME_COPY)
+    private val logFolder: File
+        get() = File(context.filesDir, LOG_FOLDER_NAME).also { directory ->
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+        }
+
+    private val logFiles: Array<out File>
+        get() = logFolder.listFiles().orEmpty()
+
+    private val currentLogFile: File
+        get() {
+            val fileName = createLogFileName()
+            return File(logFolder, fileName)
+        }
 
     init {
         GlobalScope.launch(Dispatchers.IO) {
-            mutex.withLock {
-                logFile.createNewFile()
-            }
             for (logString in writeChannel) {
                 writeToFile(logString)
             }
@@ -89,27 +95,32 @@ class FileLogger private constructor(private val context: Context) : Logger {
     }
 
     suspend fun getLastCheckupData(): String = withContext(Dispatchers.IO) {
-        var line = ""
-
         mutex.withLock {
-            BufferedReader(FileReader(logFile)).use { input ->
-                while (true) {
-                    line = input.readLine() ?: break
-                }
-            }
+            logFiles.apply { sortByDescending { it.lastModified() } }
+                .asSequence()
+                .map {
+                    var line: String? = null
+                    BufferedReader(FileReader(it)).use { input ->
+                        while (true) {
+                            line = input.readLine() ?: break
+                        }
+                    }
+                    line
+                }.filter { !it.isNullOrBlank() }
+                .firstOrNull() ?: ""
         }
-
-        line
     }
 
     suspend fun getFullLogs(): List<String> = withContext(Dispatchers.IO) {
         val lines = mutableListOf<String>()
 
         mutex.withLock {
-            BufferedReader(FileReader(logFile)).use { input ->
-                while (true) {
-                    val line = input.readLine() ?: break
-                    lines.add(line)
+            logFiles.apply { sortBy { it.lastModified() } }.forEach { logFile ->
+                BufferedReader(FileReader(logFile)).use { input ->
+                    while (true) {
+                        val line = input.readLine() ?: break
+                        lines.add(line)
+                    }
                 }
             }
         }
@@ -119,43 +130,19 @@ class FileLogger private constructor(private val context: Context) : Logger {
 
     suspend fun clearOutdatedData() = withContext(Dispatchers.IO) {
         mutex.withLock {
-            val output = FileOutputStream(File(context.filesDir, LOG_FILE_NAME_COPY))
-            val writer = BufferedWriter(OutputStreamWriter(output))
-            BufferedReader(FileReader(logFile)).use { reader ->
-                while (true) {
-                    val log = reader.readLine() ?: break
-                    val logDate = runCatching {
-                        logLineTimeFormatter.parse(log.subSequence(0, logDateExample.length).toString())
-                    }.getOrNull() ?: Date()
-                    val diffDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - logDate.time)
-                    if (diffDays <= MAX_LOG_LIFESPAN_IN_DAYS) {
-                        writer.append(log + "\n")
-                    } else {
-                        val errorLine =
-                            "Removed line with diff of $diffDays days: $diffDays and current time ${System.currentTimeMillis()}"
-                        Firebase.crashlytics.recordException(IllegalStateException(
-                            errorLine
-                        ))
-                    }
-                }
+            val dayInMillis = TimeUnit.DAYS.toMillis(1)
+            val relevantLogNames = List(MAX_LOG_LIFESPAN_IN_DAYS) { index ->
+                val date = Date(System.currentTimeMillis() - dayInMillis * index)
+                createLogFileName(date)
             }
-            writer.close()
-            output.close()
 
-            try {
-                logFile.delete()
-                logFileTemp.renameTo(logFile)
-                logFileTemp.delete()
-                if (!logFile.exists()) {
-                    Firebase.crashlytics.recordException(IllegalStateException("Log file isn't created after cleanup operation."))
-                }
-                if (logFileTemp.exists()) {
-                    Firebase.crashlytics.recordException(IllegalStateException("Temp log file wasn't removed after cleanup operation"))
-                }
-            } catch (e: SecurityException) {
-                Firebase.crashlytics.recordException(e)
-            }
+            logFiles.filter { !relevantLogNames.contains(it.name) }.forEach(::deleteFile)
         }
+    }
+
+    private fun createLogFileName(date: Date = Date()): String {
+        val currentDate = logFileNameFormatter.format(date)
+        return "${currentDate}_$LOG_FILE_NAME_POSTFIX"
     }
 
     private fun formatLog(data: String): String {
@@ -164,13 +151,32 @@ class FileLogger private constructor(private val context: Context) : Logger {
 
     private fun writeToFile(data: String) {
         try {
-            logFile.createNewFile()
-            FileOutputStream(logFile, true).use { outputStream ->
+            currentLogFile.createNewFile()
+            FileOutputStream(currentLogFile, true).use { outputStream ->
                 OutputStreamWriter(outputStream).use { it.append(data) }
             }
         } catch (e: IOException) {
             Firebase.crashlytics.recordException(e)
             println("Failed to write log: ${e.message}")
+        }
+    }
+
+    private fun deleteFile(file: File) {
+        var isDeleted = false
+        try {
+            isDeleted = file.delete()
+            if (!isDeleted) {
+                file.name
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { fileName -> isDeleted = context.deleteFile(fileName) }
+                    ?: println("File couldn't be deleted (missing file name): ${file.absolutePath}")
+            }
+        } catch (throwable: Throwable) {
+            logException(throwable)
+        }
+
+        if (!isDeleted) {
+            println("Couldn't delete a file: ${file.absolutePath}")
         }
     }
 
