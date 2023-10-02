@@ -107,7 +107,6 @@ class FileLogger private constructor(private val context: Context) : Logger {
                     }
                     line
                 }.filter { !it.isNullOrBlank() }
-                .take(1)
                 .firstOrNull() ?: ""
         }
     }
