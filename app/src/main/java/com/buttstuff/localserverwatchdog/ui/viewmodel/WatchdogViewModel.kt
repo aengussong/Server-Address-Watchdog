@@ -8,13 +8,13 @@ import kotlinx.coroutines.launch
 
 class WatchdogViewModel : BaseViewModel() {
 
-    val isRequiredDataSet: SharedFlow<Boolean> = MutableSharedFlow()
+    val hasRequiredData: SharedFlow<Boolean> = MutableSharedFlow()
 
     private val repository = Repository.getInstance()
 
     init {
         viewModelScope.launch {
-            isRequiredDataSet.emit(repository.isRequiredDataSet())
+            hasRequiredData.emit(repository.isRequiredDataSet())
         }
     }
 }
