@@ -3,8 +3,11 @@
     <string name="hint_enter_server_address">Input ip or host</string>
     <string name="confirm">OK</string>
     <string name="interval_set_header">Set how often watchdog should check on server. Minimum value is 5 minutes.</string>
+
     <string name="error_server_address_invalid">Can\'t recognize input as ip or host</string>
     <string name="error_wifi_is_off">Wi-Fi is off. Watchdog can watch over server address only over Wi-Fi.</string>
+    <string name="error_network_unavailable">The network is down. Can\'t check on server address.</string>
+
     <string name="ping_server">Bite</string>
     <string name="last_server_status">Last checkup result: %s</string>
     <string name="btn_stop_watchdog">Stop Watchdog</string>
@@ -12,6 +15,12 @@
     <string name="hint_watch_only_over_wifi">Watch only over Wi-Fi</string>
     <string name="hours">h</string>
     <string name="minutes">m</string>
+
+    <string name="notif_title">Watchdog: %s</string>
+    <string name="notif_content_server_on">🥳 %s is back on!</string>
+    <string name="notif_content_server_down">😡 %s is down!</string>
+    <string name="notif_content_wifi_restriction">⚙️ Wifi is down! Can\'t perform check, as wi-fi restriction is turned on in the app Settings.</string>
+    <string name="notif_content_network_down">😔 Looks like network is down! Can\'t perform any network requests!</string>
 
     <string name="placeholder_empty_checkup_result">------------</string>
     <string name="placeholder_server_address" translatable="false">192.168.0.1</string>
