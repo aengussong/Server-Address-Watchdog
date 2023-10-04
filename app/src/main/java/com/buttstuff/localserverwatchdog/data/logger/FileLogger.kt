@@ -3,6 +3,7 @@ package com.buttstuff.localserverwatchdog.data.logger
 import android.content.Context
 import com.buttstuff.localserverwatchdog.R
 import com.buttstuff.localserverwatchdog.WatchdogApplication
+import com.buttstuff.localserverwatchdog.domain.ServerCheckResult
 import com.buttstuff.localserverwatchdog.util.ERROR_POINTER
 import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_DOWN
 import com.buttstuff.localserverwatchdog.util.SERVER_STATUS_UP
@@ -41,6 +42,9 @@ private const val MAX_LOG_LIFESPAN_IN_DAYS = 7
 class FileLogger private constructor(private val context: Context) : Logger {
     private val logStringWifiOff: String by lazy {
         context.getString(R.string.error_wifi_is_off)
+    }
+    private val logStringNetworkDown: String by lazy {
+        context.getString(R.string.error_network_unavailable)
     }
     private val logLineTimeFormatter = SimpleDateFormat(LOG_LINE_TIME_PATTERN, Locale.getDefault())
     private val logFileNameFormatter = SimpleDateFormat(LOG_FILE_DATE_PATTERN, Locale.getDefault())
@@ -81,19 +85,22 @@ class FileLogger private constructor(private val context: Context) : Logger {
         }
     }
 
-    override fun logCheckup(serverAddress: String, isAvailable: Boolean) {
-        val status = if (isAvailable) SERVER_STATUS_UP else SERVER_STATUS_DOWN
-        log("$serverAddress $status")
-    }
-
-    override fun logWifiIsOff() {
-        log("$ERROR_POINTER $logStringWifiOff")
+    override fun logCheckup(serverAddress: String, checkupResult: ServerCheckResult) {
+        val status = when (checkupResult) {
+            is ServerCheckResult.ServerOn -> "$serverAddress $SERVER_STATUS_UP"
+            is ServerCheckResult.ServerOff -> "$serverAddress $SERVER_STATUS_DOWN"
+            is ServerCheckResult.FailedWifiRestriction -> "$ERROR_POINTER $logStringWifiOff"
+            is ServerCheckResult.NetworkDown -> "$ERROR_POINTER $logStringNetworkDown"
+        }
+        log(status)
     }
 
     override fun logException(exception: Throwable) {
         Firebase.crashlytics.recordException(exception)
     }
 
+    // todo should refactor this function to return not only String, but String and Status, so the logic of parsing
+    //  written logs and logging would be located in the same class
     suspend fun getLastCheckupData(): String = withContext(Dispatchers.IO) {
         mutex.withLock {
             logFiles.apply { sortByDescending { it.lastModified() } }
